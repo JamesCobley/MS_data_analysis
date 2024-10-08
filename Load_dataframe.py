@@ -1,6 +1,6 @@
 import pandas as pd
 
-# Load your protein report HTT file into colab
+# Load your protein group report file
 file_path = '/content/Report_HTT_James.xlsx'
 xls = pd.ExcelFile(file_path)
 
