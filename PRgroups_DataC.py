@@ -23,7 +23,9 @@ sheet1_df = pd.DataFrame({
 # Step 3: Calculate data completeness (the proportion of non-NaN values for each row) for sheet 2
 # Completeness for each row is calculated as the proportion of non-NaN values across all samples
 completeness = df[sample_columns].notna().mean(axis=1) * 100  # Convert to percentage
-sheet2_df = pd.DataFrame({'Row_Index': df.index, 'Completeness (%)': completeness})
+
+# Include metadata columns (first 4 columns) in sheet 2 alongside completeness data
+sheet2_df = pd.concat([df.iloc[:, :4], pd.DataFrame({'Completeness (%)': completeness})], axis=1)
 
 # Step 4: Plot the data completeness as a histogram
 plt.figure(figsize=(8, 6), dpi=300)
@@ -35,12 +37,12 @@ plt.grid(True)
 plt.savefig('/content/Data_Completeness_Histogram.png')  # Save the histogram as a PNG file
 
 # Step 5: Save everything to a new Excel file with two sheets
-output_file_path = '/content/Protein_Groups_And_Completeness.xlsx'
+output_file_path = '/content/Protein_Groups_And_Completeness_with_Metadata.xlsx'
 with pd.ExcelWriter(output_file_path, engine='xlsxwriter') as writer:
     # Write sheet 1: Unique protein groups identified in each sample
     sheet1_df.to_excel(writer, sheet_name='Protein Groups Identified', index=False)
     
-    # Write sheet 2: Data completeness for each row
+    # Write sheet 2: Data completeness for each row with metadata
     sheet2_df.to_excel(writer, sheet_name='Data Completeness', index=False)
 
-print(f"Protein group counts and data completeness saved to: {output_file_path}")
+print(f"Protein group counts and data completeness (with metadata) saved to: {output_file_path}")
