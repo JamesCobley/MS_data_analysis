@@ -14,21 +14,29 @@ df['log10_p_value'] = -np.log10(df['p_value'])
 # Step 3: Set up the figure for the volcano plot
 plt.figure(figsize=(10, 7), dpi=300)
 
-# Step 4: Plot all points (non-significant in grey)
+# Step 4: Plot non-significant points in grey
 plt.scatter(df['Mean_Difference'], df['log10_p_value'], c='grey', alpha=0.7, label='Not significant')
 
-# Step 5: Highlight significant points (p-value < 0.05) in red
-significant = df['p_value'] < 0.05  # Use the unadjusted p-value for significance
-plt.scatter(df.loc[significant, 'Mean_Difference'], 
-            df.loc[significant, 'log10_p_value'], 
-            c='red', alpha=0.8, label='Significant (p < 0.05)')
+# Step 5: Highlight upregulated and downregulated points with different colors
+# Upregulated: Positive mean difference and significant (e.g., blue)
+upregulated = (df['p_value'] < 0.05) & (df['Mean_Difference'] > 0)
+plt.scatter(df.loc[upregulated, 'Mean_Difference'], 
+            df.loc[upregulated, 'log10_p_value'], 
+            c='blue', alpha=0.8, label='Upregulated (p < 0.05)')
 
-# Step 6: Add labels and formatting to the volcano plot
+# Downregulated: Negative mean difference and significant (e.g., green)
+downregulated = (df['p_value'] < 0.05) & (df['Mean_Difference'] < 0)
+plt.scatter(df.loc[downregulated, 'Mean_Difference'], 
+            df.loc[downregulated, 'log10_p_value'], 
+            c='red', alpha=0.8, label='Downregulated (p < 0.05)')
+
+# Step 6: Add labels, formatting, and gridlines to the volcano plot
 plt.title('Volcano Plot of HTT vs. WT (Unadjusted p-values)', fontsize=16)
 plt.xlabel('Mean Difference (HTT - WT)', fontsize=12)
 plt.ylabel('-log10(p-value)', fontsize=12)
 plt.axhline(y=-np.log10(0.05), color='blue', linestyle='--', linewidth=1, label='p = 0.05')  # Significance threshold
 plt.axvline(x=0, color='black', linestyle='-', linewidth=1)  # Mean difference = 0 line
+plt.grid(True, linestyle='--', linewidth=0.5)  # Add gridlines for better readability
 plt.legend(loc='upper right')
 
 # Step 7: Save the volcano plot with 300 DPI
@@ -69,6 +77,7 @@ plt.axvline(x=0, color='black', linestyle='--', label='Mean Difference = 0')
 plt.title('Distribution of Mean Differences (HTT vs. WT)', fontsize=14)
 plt.xlabel('Mean Difference (HTT - WT)', fontsize=12)
 plt.ylabel('Frequency', fontsize=12)
+plt.grid(True, linestyle='--', linewidth=0.5)  # Add gridlines to the distribution plot
 plt.legend()
 distribution_output_path = '/content/Mean_Difference_Distribution.png'
 plt.savefig(distribution_output_path, dpi=300)
