@@ -15,13 +15,22 @@ gp = GProfiler(return_dataframe=True)
 # Use 'mmusculus' for mouse-specific enrichment
 results = gp.profile(organism='mmusculus', query=significant_proteins)
 
+# Check what columns are available in the 'results' dataframe
+print("Columns in g:Profiler results:")
+print(results.columns)
+
 # Step 4: Define the background gene set (all proteins in your dataset)
 all_proteins = df['Gene'].tolist()
 
 # Step 5: Loop through each pathway in the enrichment results and perform Fisher's exact test
 for index, row in results.iterrows():
     pathway_name = row['name']
-    pathway_genes = row['intersections']  # Genes in this pathway
+    
+    # Print the row to identify where the intersections (genes in pathway) are stored
+    print(row)  # This will help identify the correct field for the genes involved in the pathway
+    
+    # Pathway genes (adjust this column based on the output of the above print)
+    pathway_genes = row['intersection']  # Replace this with the correct column name
 
     # Contingency table values for Fisher's Exact Test:
     a = len([gene for gene in significant_proteins if gene in pathway_genes])  # Significant and in pathway
