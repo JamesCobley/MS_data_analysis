@@ -19,9 +19,9 @@ results = gp.profile(organism='mmusculus', query=significant_proteins)
 all_proteins = df['Gene'].tolist()
 
 # Step 5: Loop through each pathway in the enrichment results and perform Fisher's exact test
-for result in results['result']:  # Loop through the detailed results
-    pathway_name = result['name']
-    pathway_genes = result['intersection']  # This contains the actual intersecting genes
+for result in results:  # 'results' is a list, so iterate over it
+    pathway_name = result['name']  # Access pathway name
+    pathway_genes = result['intersection']  # Access the intersecting genes
     
     # Print pathway name and intersecting genes for verification
     print(f"Pathway: {pathway_name}")
@@ -41,7 +41,7 @@ for result in results['result']:  # Loop through the detailed results
     print(f"Fisher's Exact Test p-value: {p_value:.4f}, Odds ratio: {odds_ratio:.2f}\n")
 
 # Step 6: Optionally, you can save significant pathways (p-value < 0.05) to a CSV
-significant_pathways = [result for result in results['result'] if result['p_value'] < 0.05]
+significant_pathways = [result for result in results if result['p_value'] < 0.05]
 if significant_pathways:
     significant_df = pd.DataFrame(significant_pathways)
     significant_df.to_csv('/content/significant_pathways_mouse.csv', index=False)
