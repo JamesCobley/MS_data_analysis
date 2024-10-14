@@ -5,6 +5,7 @@ from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
 # Define Kyte-Doolittle hydrophobicity scale and solubility thresholds
 valid_amino_acids = set("ACDEFGHIKLMNPQRSTVWY")  # Standard 20 amino acids
+total_proteins_count = 21709  # Total number of proteins in the proteome
 
 # Function to compute the GRAVY score of a protein sequence
 def compute_hydrophobicity(sequence):
@@ -27,6 +28,7 @@ def classify_phase(gravy_score):
 
 # Initialize lists to store protein details and phase classification
 protein_list = []
+phase_counts = {"Water Phase (Hydrophilic)": 0, "Protein Disc (Amphipathic)": 0, "Lipid Phase (Hydrophobic)": 0, "Unknown": 0}
 
 # Open and parse the gzipped FASTA file
 fasta_file = '/content/UP000000589_10090.fasta.gz'
@@ -40,11 +42,14 @@ with gzip.open(fasta_file, 'rt') as handle:
         
         if hydrophobicity is None:
             skipped_proteins += 1
-            continue
+            phase_class = "Unknown"
+        else:
+            phase_class = classify_phase(hydrophobicity)
+        
+        # Count the protein phase
+        phase_counts[phase_class] += 1
         
         total_proteins += 1
-        phase_class = classify_phase(hydrophobicity)
-        
         # Append UniProt ID, protein name, GRAVY score, and phase classification
         protein_list.append([record.id, record.description.split()[1], hydrophobicity, phase_class])
 
@@ -55,7 +60,12 @@ protein_df = pd.DataFrame(protein_list, columns=['UniProt ID', 'Protein Name', '
 output_file = '/content/protein_phase_estimation.xlsx'
 protein_df.to_excel(output_file, index=False)
 
+# Calculate percentages
+for phase, count in phase_counts.items():
+    percentage = (count / total_proteins_count) * 100
+    print(f"{phase}: {count} proteins ({percentage:.2f}%)")
+
 # Print summary
-print(f"Total number of proteins detected: {total_proteins}")
+print(f"Total number of proteins analyzed: {total_proteins}")
 print(f"Skipped proteins due to non-standard amino acids: {skipped_proteins}")
 print(f"Phase classification saved to {output_file}")
