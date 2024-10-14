@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import skew
+from adjustText import adjust_text  # Import the library
 
 # Function to select the sheet and load the Excel file
 def load_excel(file_path):
@@ -43,8 +44,12 @@ plt.scatter(df.loc[downregulated, 'Mean_Difference'],
             c='red', alpha=0.8, label='Downregulated (p < 0.05)')
 
 # Step 7: Annotate the top 100 proteins based on p-values with their gene names
+texts = []
 for i, row in top_100_proteins.iterrows():
-    plt.text(row['Mean_Difference'], row['log10_p_value'], row['Gene'], fontsize=8, ha='right')
+    texts.append(plt.text(row['Mean_Difference'], row['log10_p_value'], row['Gene'], fontsize=8, ha='right'))
+
+# Automatically adjust text labels to avoid overlap
+adjust_text(texts, arrowprops=dict(arrowstyle='-', color='gray', lw=0.5))
 
 # Step 8: Add labels, formatting, and gridlines to the volcano plot
 plt.title('Volcano Plot of HTT vs. WT (Top 100 Differentially Expressed Genes)', fontsize=16)
