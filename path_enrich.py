@@ -1,32 +1,43 @@
-from gprofiler import GProfiler
 import pandas as pd
+from scipy.stats import fisher_exact
+from gprofiler import GProfiler
 
-# Step 1: Load your dataset containing genes or proteins
-file_path = '/content/your_dataset.xlsx'  # Adjust this to your actual file
+# Step 1: Load your dataset containing mouse proteins/genes and their p-values
+file_path = '/content/HTT_EXP_OCT_24.xlsx'  # Update this to your actual file path
 df = pd.read_excel(file_path)
 
-# Assume 'Gene' is the column with the gene symbols
-genes_of_interest = df['Gene'].tolist()
+# Step 2: Filter significant proteins based on the p-value threshold (e.g., p_value < 0.05)
+significance_threshold = 0.05
+significant_proteins = df[df['p_value'] < significance_threshold]['Gene'].tolist()
 
-# Step 2: Initialize g:Profiler and query pathways
+# Step 3: Initialize g:Profiler for Mus musculus (mouse) and run enrichment analysis
 gp = GProfiler(return_dataframe=True)
+# Use 'mmusculus' for mouse-specific enrichment
+results = gp.profile(organism='mmusculus', query=significant_proteins)
 
-# Step 3: Run g:Profiler for pathway enrichment (KEGG, Reactome, etc.)
-results = gp.profile(organism='hsapiens', query=genes_of_interest)
+# Step 4: Define the background gene set (all proteins in your dataset)
+all_proteins = df['Gene'].tolist()
 
-# Step 4: Filter results for specific pathway of interest (e.g., 'KEGG')
-specific_pathway = results[results['source'] == 'KEGG']
+# Step 5: Loop through each pathway in the enrichment results and perform Fisher's exact test
+for index, row in results.iterrows():
+    pathway_name = row['name']
+    pathway_genes = row['intersections']  # Genes in this pathway
 
-# You can also search for specific pathways by name:
-pathway_of_interest = specific_pathway[specific_pathway['name'].str.contains('MAPK signaling pathway')]
+    # Contingency table values for Fisher's Exact Test:
+    a = len([gene for gene in significant_proteins if gene in pathway_genes])  # Significant and in pathway
+    b = len(significant_proteins) - a  # Significant but not in pathway
+    c = len([gene for gene in all_proteins if gene in pathway_genes]) - a  # Not significant and in pathway
+    d = len(all_proteins) - (a + b + c)  # Not significant and not in pathway
 
-# Step 5: Determine representation
-pathway_gene_count = pathway_of_interest['intersection_size'].values[0]
-total_genes_in_pathway = pathway_of_interest['effective_domain_size'].values[0]
+    # Perform Fisher's Exact Test
+    contingency_table = [[a, b], [c, d]]
+    odds_ratio, p_value = fisher_exact(contingency_table)
 
-# Calculate relative representation
-representation = pathway_gene_count / total_genes_in_pathway
-print(f"Representation of the pathway: {representation:.2%}")
+    # Print the results for each pathway
+    print(f"Pathway: {pathway_name}")
+    print(f"Contingency Table: {contingency_table}")
+    print(f"Fisher's Exact Test p-value: {p_value:.4f}, Odds ratio: {odds_ratio:.2f}\n")
 
-# Optional: Save the results to a CSV for further inspection
-results.to_csv('/content/pathway_enrichment_results.csv', index=False)
+# Step 6: Optionally, filter for significant pathways based on the p-value threshold
+significant_pathways = results[results['p_value'] < 0.05]
+significant_pathways.to_csv('/content/significant_pathways_mouse.csv', index=False)
