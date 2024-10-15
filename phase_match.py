@@ -1,7 +1,7 @@
 import pandas as pd
 import re
 
-# Function to clean and extract core UniProt ID
+# Function to clean and extract core UniProt ID from the predicted data
 def extract_uniprot_id(protein_id):
     # This regex captures the part of the UniProt ID after tr| or sp|, or uses the whole if no prefix
     match = re.match(r"(?:tr|sp)\|([^|]+)\|", protein_id)
@@ -11,7 +11,7 @@ def extract_uniprot_id(protein_id):
         return protein_id  # Return as is if no prefix
 
 # Load the predicted phase data from refined_protein_phase_estimation.xlsx
-predicted_phase_file = '/content/Report_HTT_James.xlsx'
+predicted_phase_file = '/content/refined_protein_phase_estimation.xlsx'
 predicted_df = pd.read_excel(predicted_phase_file)
 
 # Apply the function to clean up the UniProt ID in the predicted data
@@ -24,9 +24,13 @@ ms_df = pd.read_excel(ms_output_file)
 
 # Function to check if any of the UniProt IDs in the MS entry matches the predicted IDs
 def match_uniprot(ms_protein_names, predicted_uniprot_set):
-    # Split the MS Protein.Names by semicolon (;) and check if any match the predicted IDs
-    ms_ids = [entry.strip() for entry in ms_protein_names.split(';')]
-    return any(ms_id in predicted_uniprot_set for ms_id in ms_ids)
+    # Check if the entry is a string, if not (e.g., NaN), return False
+    if isinstance(ms_protein_names, str):
+        # Split the MS Protein.Names by semicolon (;) and check if any match the predicted IDs
+        ms_ids = [entry.strip() for entry in ms_protein_names.split(';')]
+        return any(ms_id in predicted_uniprot_set for ms_id in ms_ids)
+    else:
+        return False  # If not a valid string, no match
 
 # Create a set of all Clean UniProt IDs from the predicted data for fast lookup
 predicted_uniprot_set = set(predicted_df['Clean UniProt ID'])
