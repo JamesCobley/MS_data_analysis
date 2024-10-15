@@ -6,15 +6,15 @@ def extract_uniprot_id(protein_id):
     # This regex captures the part of the UniProt ID after tr| or sp|, or uses the whole if no prefix
     match = re.match(r"(?:tr|sp)\|([^|]+)\|", protein_id)
     if match:
-        return match.group(1)  # Return the part after tr| or sp|
+        return match.group(1).lower()  # Return the part after tr| or sp|, converted to lowercase
     else:
-        return protein_id  # Return as is if no prefix
+        return protein_id.lower()  # Return as is if no prefix, converted to lowercase
 
 # Load the predicted phase data from refined_protein_phase_estimation.xlsx
 predicted_phase_file = '/content/refined_protein_phase_estimation.xlsx'
 predicted_df = pd.read_excel(predicted_phase_file)
 
-# Apply the function to clean up the UniProt ID in the predicted data
+# Apply the function to clean up and lowercase the UniProt ID in the predicted data
 predicted_df['Clean UniProt ID'] = predicted_df['UniProt ID'].apply(extract_uniprot_id)
 
 # Load the mass spectrometry output data (assuming a column 'Protein.Names' with multiple IDs separated by ;)
@@ -25,7 +25,7 @@ ms_df = pd.read_excel(ms_output_file)
 # Extract unique UniProt IDs from the MS output (handling multiple IDs separated by semicolons)
 ms_detected_uniprot_ids = set()
 for names in ms_df['Unnamed: 2'].dropna():  # Drop NaN values to avoid errors
-    ms_ids = [entry.strip() for entry in names.split(';')]  # Split multiple IDs and strip whitespace
+    ms_ids = [entry.strip().lower() for entry in names.split(';')]  # Split multiple IDs and convert to lowercase
     ms_detected_uniprot_ids.update(ms_ids)  # Add to the set of unique detected IDs
 
 # Function to check if a protein in the predicted data was detected in MS
