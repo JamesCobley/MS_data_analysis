@@ -19,27 +19,21 @@ predicted_df['Clean UniProt ID'] = predicted_df['UniProt ID'].apply(extract_unip
 
 # Load the mass spectrometry output data (assuming a column 'Protein.Names' with multiple IDs separated by ;)
 # Replace 'ms_output_file.xlsx' with the actual path to your MS output file
-ms_output_file = '/content/ms_output_file.xlsx'
+ms_output_file = '/content/Report_HTT_James.xlsx'
 ms_df = pd.read_excel(ms_output_file)
 
-# Function to check if any of the UniProt IDs in the MS entry matches the predicted IDs
-def match_uniprot(ms_protein_names, predicted_uniprot_set):
-    # Check if the entry is a string, if not (e.g., NaN), return False
-    if isinstance(ms_protein_names, str):
-        # Split the MS Protein.Names by semicolon (;) and check if any match the predicted IDs
-        ms_ids = [entry.strip() for entry in ms_protein_names.split(';')]
-        return any(ms_id in predicted_uniprot_set for ms_id in ms_ids)
-    else:
-        return False  # If not a valid string, no match
+# Extract unique UniProt IDs from the MS output (handling multiple IDs separated by semicolons)
+ms_detected_uniprot_ids = set()
+for names in ms_df['Unnamed: 2'].dropna():  # Drop NaN values to avoid errors
+    ms_ids = [entry.strip() for entry in names.split(';')]  # Split multiple IDs and strip whitespace
+    ms_detected_uniprot_ids.update(ms_ids)  # Add to the set of unique detected IDs
 
-# Create a set of all Clean UniProt IDs from the predicted data for fast lookup
-predicted_uniprot_set = set(predicted_df['Clean UniProt ID'])
+# Function to check if a protein in the predicted data was detected in MS
+def is_detected_in_ms(predicted_id):
+    return predicted_id in ms_detected_uniprot_ids
 
 # Add a 'Detected' column to the predicted_df indicating if the protein was detected in MS
-predicted_df['Detected'] = predicted_df['Clean UniProt ID'].apply(lambda x: x in predicted_uniprot_set)
-
-# Now check each MS entry and see if it contains a matching UniProt ID
-ms_df['Matched'] = ms_df['Protein.Names'].apply(lambda names: match_uniprot(names, predicted_uniprot_set))
+predicted_df['Detected'] = predicted_df['Clean UniProt ID'].apply(is_detected_in_ms)
 
 # Calculate the total number of predicted proteins per phase
 total_phase_counts = predicted_df.groupby('Phase Classification').size()
